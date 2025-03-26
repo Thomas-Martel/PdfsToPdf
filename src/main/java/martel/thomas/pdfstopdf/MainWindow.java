@@ -9,7 +9,6 @@ import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
-import javafx.stage.DirectoryChooser;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 import org.apache.pdfbox.io.MemoryUsageSetting;
@@ -17,31 +16,40 @@ import org.apache.pdfbox.multipdf.PDFMergerUtility;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.util.List;
 
 public class MainWindow {
     private final Stage stage;
     private final BorderPane borderPane;
     private final ListView<File> listView = new ListView<>();
-    private final TextField fileNameTextField = new TextField();
     private final SimpleObjectProperty<File> lastPath = new SimpleObjectProperty<>();
+    private final FileChooser fileChooser;
 
     public MainWindow(Stage stage, BorderPane borderPane) {
         this.stage = stage;
         this.borderPane = borderPane;
+        listView.setCellFactory(_ -> new ListCell<>() {
+            @Override
+            protected void updateItem(File file, boolean empty) {
+                super.updateItem(file, empty);
+                setText(empty ? "" : file.getName());
+            }
+        });
+
+        fileChooser = new FileChooser();
+        FileChooser.ExtensionFilter extFilter = new FileChooser.ExtensionFilter("PDF files (*.pdf)", "*.pdf");
+        fileChooser.getExtensionFilters().add(extFilter);
+        fileChooser.initialDirectoryProperty().bindBidirectional(lastPath);
     }
 
     /**
      * Opens up a file chooser window and adds the selected PDF to a ListView
      */
     public void selectPdf() {
-        FileChooser fileChooser = new FileChooser();
-        FileChooser.ExtensionFilter extFilter = new FileChooser.ExtensionFilter("PDF files (*.pdf)", "*.pdf");
-        fileChooser.getExtensionFilters().add(extFilter);
-        fileChooser.initialDirectoryProperty().bindBidirectional(lastPath);
-        File selectedFile = fileChooser.showOpenDialog(stage);
-        if (selectedFile != null) {
-            lastPath.set(selectedFile.getParentFile());
-            listView.getItems().add(selectedFile);
+        List<File> selectedFiles = fileChooser.showOpenMultipleDialog(stage);
+        if (!selectedFiles.isEmpty()) {
+            selectedFiles.forEach(file -> listView.getItems().add(file));
+            lastPath.set(selectedFiles.getLast().getParentFile());
         }
     }
 
@@ -52,25 +60,17 @@ public class MainWindow {
      * @throws IOException something went wrong
      */
     public void combinePdfs() throws IOException {
-        String name = fileNameTextField.getText();
-
-        if (name.isBlank()) {
-            new PopupWindow("Please enter a pdf file name");
-            return;
-        }
-
         if (listView.getItems().size() < 2) {
             new PopupWindow("Please choose at least two pdf files");
             return;
         }
 
-        DirectoryChooser directoryChooser = new DirectoryChooser();
-        File selectedDirectory = directoryChooser.showDialog(stage);
+        File selectedDirectory = fileChooser.showSaveDialog(stage);
 
-        String outputFile = selectedDirectory.getAbsolutePath() + "/" + name + ".pdf";
+        if (selectedDirectory == null) return;
 
         PDFMergerUtility pdfMergerUtility = new PDFMergerUtility();
-        pdfMergerUtility.setDestinationFileName(outputFile);
+        pdfMergerUtility.setDestinationFileName(selectedDirectory.getAbsolutePath());
 
         listView.getItems().forEach(file -> {
             try {
@@ -89,9 +89,6 @@ public class MainWindow {
      * (File name TextField, Combine Button)
      */
     public void createControls() {
-        Label label = new Label("File name : ");
-        fileNameTextField.setPrefWidth(200);
-        fileNameTextField.setText("Output");
         Button combineButton = new Button("Combine");
         combineButton.setMinSize(75, 0);
         EventHandler<ActionEvent> en = _ -> {
@@ -104,7 +101,7 @@ public class MainWindow {
         combineButton.setOnAction(en);
 
         HBox bottomBox = new HBox();
-        bottomBox.getChildren().addAll(label, fileNameTextField, combineButton);
+        bottomBox.getChildren().addAll(combineButton);
         bottomBox.setPadding(new Insets(10, 10, 10, 20));
         bottomBox.setSpacing(10);
         bottomBox.setAlignment(Pos.CENTER_RIGHT);
@@ -135,7 +132,14 @@ public class MainWindow {
 
         Button removePdfButton = new Button("Remove PDF");
         removePdfButton.setMinSize(75, 0);
-        EventHandler<ActionEvent> removePdfAction = _ -> listView.getItems().removeLast();
+        EventHandler<ActionEvent> removePdfAction = _ -> {
+            if (!listView.getItems().isEmpty()) {
+                int index = listView.getSelectionModel().getSelectedIndex() == -1 ?
+                        listView.getItems().size() - 1 :
+                        listView.getSelectionModel().getSelectedIndex();
+                listView.getItems().remove(index);
+            }
+        };
         removePdfButton.setOnAction(removePdfAction);
 
         Button clearPdfsButton = new Button("Clear PDFs");
