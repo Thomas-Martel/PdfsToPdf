@@ -7,6 +7,7 @@ import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
+import javafx.scene.image.Image;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.stage.FileChooser;
@@ -17,6 +18,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.List;
+import java.util.Objects;
 
 public class MainWindow {
     private final Stage stage;
@@ -158,6 +160,7 @@ public class MainWindow {
     public void createWindow() {
         Scene scene = new Scene(borderPane, 800, 600);
         stage.setTitle("PDFs to PDF");
+        stage.getIcons().add(new Image(Objects.requireNonNull(MainWindow.class.getResourceAsStream("/icon/application.png"))));
         stage.setScene(scene);
         stage.show();
 

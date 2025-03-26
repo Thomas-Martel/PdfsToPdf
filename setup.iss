@@ -2,7 +2,7 @@
 ; SEE THE DOCUMENTATION FOR DETAILS ON CREATING INNO SETUP SCRIPT FILES!
 
 #define MyAppName "Pdfs To Pdf"
-#define MyAppVersion "1.1.0"
+#define MyAppVersion "1.1.1"
 #define MyAppPublisher "Thomas Martel"
 #define MyAppURL "https://github.com/Thomas-Martel/PdfsToPdf"
 #define MyAppExeName "PdfsToPdf.exe"
@@ -25,7 +25,7 @@ LicenseFile=C:\Users\thoma\Documents\projects\java-ui\PdfsToPdf\LICENSE.txt
 ; Uncomment the following line to run in non administrative install mode (install for current user only).
 ;PrivilegesRequired=lowest
 PrivilegesRequiredOverridesAllowed=dialog
-OutputBaseFilename=PdfsToPdf-Installer
+OutputBaseFilename=PdfsToPdf-v{#MyAppVersion}-Installer
 SolidCompression=yes
 WizardStyle=modern
 
